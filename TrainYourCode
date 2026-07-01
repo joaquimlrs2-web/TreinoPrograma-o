@@ -1,0 +1,1187 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Luau Dojo — Treino diário de lógica para Roblox Studio</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=JetBrains+Mono:wght@400;500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/fengari-web@0.1.4/dist/fengari-web.js"></script>
+<style>
+:root{
+  --bg:#111113;
+  --panel:#19191c;
+  --panel-2:#212124;
+  --panel-3:#252528;
+  --border:#2d2d31;
+  --border-soft:#242427;
+  --border-strong:#3c3c41;
+  --text:#f4f4f6;
+  --text-dim:#9a9aa1;
+  --text-faint:#63636a;
+  --white:#ffffff;
+  --white-soft:rgba(255,255,255,0.06);
+  --white-mid:rgba(255,255,255,0.12);
+  --white-line:rgba(255,255,255,0.16);
+  --ok:#9fd6ab;
+  --ok-dim:#20261f;
+  --ok-line:#33402f;
+  --danger:#e69a9d;
+  --danger-dim:#2a2020;
+  --danger-line:#43302f;
+  --font-display:'Space Grotesk', sans-serif;
+  --font-mono:'JetBrains Mono', monospace;
+  --font-body:'Inter', sans-serif;
+
+  /* ---- syntax highlight (baseado no tema Roblox Studio) ---- */
+  --syn-text:#bcbec8;
+  --syn-operator:#bcbec8;
+  --syn-number:#f2ba2a;
+  --syn-string:#8ee9b6;
+  --syn-comment:#6a6f81;
+  --syn-keyword:#eb7973;
+  --syn-builtin:#8fb4ff;
+  --syn-function-name:#fae4aa;
+  --syn-local-property:#70a0ff;
+}
+*{box-sizing:border-box;}
+html,body{margin:0;padding:0;}
+body{
+  background:
+    radial-gradient(circle at 12% -5%, rgba(255,255,255,0.05), transparent 40%),
+    radial-gradient(circle at 90% 10%, rgba(255,255,255,0.035), transparent 35%),
+    var(--bg);
+  color:var(--text);
+  font-family:var(--font-body);
+  min-height:100vh;
+  line-height:1.5;
+}
+::selection{ background:var(--white); color:#111113; }
+a{color:var(--text); text-decoration-color:var(--text-faint);}
+
+/* ---------- shell ---------- */
+.shell{ max-width:1080px; margin:0 auto; padding:28px 20px 80px; }
+
+.topbar{
+  display:flex; align-items:center; justify-content:space-between;
+  padding-bottom:22px; margin-bottom:22px; border-bottom:1px solid var(--border-soft);
+  flex-wrap:wrap; gap:14px;
+}
+.brand{ display:flex; align-items:center; gap:12px; }
+.brand .glyph{
+  width:36px;height:36px; border-radius:9px;
+  background:linear-gradient(150deg, #ffffff, #c8c8ce);
+  display:flex; align-items:center; justify-content:center;
+  font-family:var(--font-mono); font-weight:700; color:#111113; font-size:17px;
+  box-shadow:0 0 0 1px var(--white-line), 0 10px 22px -8px rgba(0,0,0,0.6);
+}
+.brand h1{ font-family:var(--font-display); font-size:19px; margin:0; letter-spacing:0.2px; }
+.brand p{ margin:0; font-size:12px; color:var(--text-faint); font-family:var(--font-mono); }
+
+.streak{
+  font-family:var(--font-mono); font-size:12px; color:var(--text-dim);
+  background:var(--panel); border:1px solid var(--border); border-radius:9px;
+  padding:9px 14px; display:flex; align-items:center; gap:8px;
+}
+.streak b{ color:var(--white); font-size:14px; font-weight:600; }
+
+/* ---------- tabs ---------- */
+.tabs{ display:flex; gap:6px; margin-bottom:22px; flex-wrap:wrap; }
+.tab-btn{
+  font-family:var(--font-mono); font-size:13px; color:var(--text-dim);
+  background:transparent; border:1px solid var(--border); border-radius:8px;
+  padding:9px 14px; cursor:pointer; transition:all .15s ease;
+}
+.tab-btn:hover{ color:var(--text); border-color:var(--border-strong); background:var(--white-soft); }
+.tab-btn.active{ color:#111113; background:var(--white); border-color:var(--white); font-weight:600; }
+
+.panel{ display:none; }
+.panel.active{ display:block; animation:fadeIn .25s ease; }
+@keyframes fadeIn{ from{opacity:0; transform:translateY(4px);} to{opacity:1; transform:translateY(0);} }
+
+/* ---------- terminal hero ---------- */
+.terminal{
+  font-family:var(--font-mono); background:var(--panel); border:1px solid var(--border);
+  border-radius:12px; padding:16px 18px; margin-bottom:18px; font-size:13px; color:var(--text-dim);
+}
+.terminal .line{ display:flex; gap:8px; }
+.terminal .prompt{ color:var(--white); }
+.terminal .cursor{ display:inline-block; width:7px; height:14px; background:var(--white); animation:blink 1s step-start infinite; vertical-align:middle; }
+@keyframes blink{ 50%{ opacity:0; } }
+
+/* ---------- challenge card ---------- */
+.card{
+  background:var(--panel); border:1px solid var(--border); border-radius:14px;
+  padding:22px; margin-bottom:16px;
+}
+.card-head{ display:flex; align-items:flex-start; justify-content:space-between; gap:12px; margin-bottom:10px; flex-wrap:wrap; }
+.card-head h2{ font-family:var(--font-display); font-size:20px; margin:0 0 6px; }
+.tags{ display:flex; gap:8px; flex-wrap:wrap; }
+.tag{ font-family:var(--font-mono); font-size:11px; padding:4px 9px; border-radius:20px; border:1px solid var(--border); color:var(--text-dim); background:var(--panel-2); }
+.tag.diff-Fácil{ color:var(--text-dim); border-color:var(--border); background:var(--panel-2); }
+.tag.diff-Média{ color:var(--text); border-color:var(--border-strong); background:var(--white-soft); }
+.tag.diff-Difícil{ color:#111113; border-color:var(--white); background:var(--white); font-weight:600; }
+.desc{ color:var(--text-dim); font-size:14.5px; white-space:pre-line; margin:12px 0 16px; }
+
+.code-editor-wrap{
+  position:relative; width:100%; min-height:220px; border:1px solid var(--border);
+  border-radius:10px; background:#0c0c0e; overflow:hidden;
+}
+.code-editor-wrap:focus-within{ border-color:var(--border-strong); box-shadow:0 0 0 3px var(--white-soft); }
+
+pre.code-highlight{
+  margin:0; position:absolute; inset:0; pointer-events:none; overflow:auto;
+  font-family:var(--font-mono); font-size:13.5px; line-height:1.55; tab-size:2;
+  padding:14px; white-space:pre-wrap; word-wrap:break-word; color:var(--syn-text);
+}
+pre.code-highlight code{ font-family:inherit; }
+
+textarea.code-editor{
+  position:relative; z-index:1; display:block; width:100%; height:100%; min-height:220px;
+  background:transparent; color:transparent; caret-color:var(--syn-text);
+  font-family:var(--font-mono); font-size:13.5px; line-height:1.55; border:0;
+  border-radius:10px; padding:14px; resize:vertical; tab-size:2;
+  outline:none; white-space:pre-wrap; word-wrap:break-word;
+}
+
+/* classes de token do realce de sintaxe (código no editor / soluções / biblioteca) */
+.tok-kw{ color:var(--syn-keyword); }
+.tok-num{ color:var(--syn-number); }
+.tok-str{ color:var(--syn-string); }
+.tok-com{ color:var(--syn-comment); font-style:italic; }
+.tok-builtin{ color:var(--syn-builtin); }
+.tok-func{ color:var(--syn-function-name); }
+.tok-op{ color:var(--syn-operator); }
+.tok-prop{ color:var(--syn-local-property); }
+
+.btn-row{ display:flex; gap:10px; margin-top:12px; flex-wrap:wrap; }
+.btn{
+  font-family:var(--font-mono); font-size:13px; border-radius:8px; padding:10px 16px;
+  border:1px solid var(--border); background:var(--panel-2); color:var(--text); cursor:pointer;
+  transition:all .15s ease;
+}
+.btn:hover{ border-color:var(--border-strong); background:var(--panel-3); }
+.btn.primary{ background:var(--white); color:#111113; border-color:var(--white); font-weight:600; }
+.btn.primary:hover{ background:#e4e4e8; }
+.btn.ghost{ background:transparent; }
+.btn.danger{ color:var(--danger); border-color:var(--danger-line); }
+.btn:disabled{ opacity:0.4; cursor:not-allowed; }
+
+.results{ margin-top:14px; font-family:var(--font-mono); font-size:13px; }
+.result-row{
+  display:flex; align-items:center; gap:10px; padding:8px 10px; border-radius:8px; margin-bottom:6px;
+  border:1px solid var(--border-soft);
+}
+.result-row.ok{ background:var(--ok-dim); border-color:var(--ok-line); color:var(--ok); }
+.result-row.fail{ background:var(--danger-dim); border-color:var(--danger-line); color:var(--danger); }
+.result-row .dot{ width:8px;height:8px;border-radius:50%; background:currentColor; flex:0 0 auto; }
+.summary{ margin-top:10px; font-size:14px; color:var(--text-dim); }
+.summary.win{ color:var(--text); font-weight:600; }
+
+.solution-box{
+  margin-top:14px; background:#0c0c0e; border:1px dashed var(--border-strong); border-radius:10px;
+  padding:14px; font-family:var(--font-mono); font-size:13px; white-space:pre-wrap; color:var(--text-dim);
+}
+.hint-box{
+  margin-top:10px; background:var(--panel-2); border:1px solid var(--border-strong); color:var(--text);
+  border-radius:10px; padding:12px 14px; font-size:13.5px;
+}
+
+/* ---------- practice controls ---------- */
+.practice-controls{ display:flex; gap:10px; margin-bottom:16px; flex-wrap:wrap; }
+select{
+  font-family:var(--font-mono); background:var(--panel-2); color:var(--text); border:1px solid var(--border);
+  border-radius:8px; padding:9px 12px; font-size:13px;
+}
+
+/* ---------- library ---------- */
+.lib-filters{ display:flex; gap:10px; margin-bottom:16px; flex-wrap:wrap; }
+.lib-item{
+  background:var(--panel); border:1px solid var(--border); border-radius:12px; padding:16px 18px; margin-bottom:12px;
+  cursor:pointer; transition:border-color .15s ease;
+}
+.lib-item:hover{ border-color:var(--border-strong); }
+.lib-item-head{ display:flex; justify-content:space-between; align-items:center; gap:10px; flex-wrap:wrap; }
+.lib-item-head h3{ font-family:var(--font-display); font-size:15.5px; margin:0; }
+.lib-item-meta{ font-family:var(--font-mono); font-size:11.5px; color:var(--text-faint); }
+.lib-item-body{ display:none; margin-top:12px; }
+.lib-item.open .lib-item-body{ display:block; }
+.lib-code{ background:#0c0c0e; border:1px solid var(--border-soft); border-radius:8px; padding:12px; font-family:var(--font-mono); font-size:12.5px; white-space:pre-wrap; overflow-x:auto; }
+.empty-state{ text-align:center; padding:50px 20px; color:var(--text-faint); font-family:var(--font-mono); font-size:13.5px; }
+
+/* ---------- settings ---------- */
+.field{ margin-bottom:16px; }
+.field label{ display:block; font-family:var(--font-mono); font-size:12.5px; color:var(--text-dim); margin-bottom:6px; }
+input[type=password], input[type=text]{
+  width:100%; background:#0c0c0e; border:1px solid var(--border); color:var(--text);
+  border-radius:8px; padding:10px 12px; font-family:var(--font-mono); font-size:13px; outline:none;
+}
+input[type=password]:focus, input[type=text]:focus{ border-color:var(--border-strong); box-shadow:0 0 0 3px var(--white-soft); }
+.note{ font-size:12.5px; color:var(--text-faint); margin-top:6px; }
+.status-pill{ display:inline-flex; align-items:center; gap:6px; font-family:var(--font-mono); font-size:12px; padding:5px 10px; border-radius:20px; border:1px solid var(--border); color:var(--text-dim); }
+.status-pill.on{ color:#111113; border-color:var(--white); background:var(--white); font-weight:600; }
+
+.stat-grid{ display:grid; grid-template-columns:repeat(auto-fit,minmax(120px,1fr)); gap:10px; margin-bottom:18px; }
+.stat{ background:var(--panel); border:1px solid var(--border); border-radius:10px; padding:14px; text-align:center; }
+.stat .num{ font-family:var(--font-display); font-size:24px; color:var(--white); }
+.stat .lbl{ font-family:var(--font-mono); font-size:11px; color:var(--text-faint); margin-top:2px; }
+
+footer{ text-align:center; margin-top:30px; font-size:12px; color:var(--text-faint); font-family:var(--font-mono); }
+@media(max-width:600px){ .card{padding:16px;} .card-head h2{font-size:17px;} }
+</style>
+</head>
+<body>
+<div class="shell">
+
+  <div class="topbar">
+    <div class="brand">
+      <div class="glyph">λ</div>
+      <div>
+        <h1>Luau Dojo</h1>
+        <p>treino diário de lógica // Roblox Studio</p>
+      </div>
+    </div>
+    <div class="streak">🔥 sequência: <b id="streakCount">0</b> dias &nbsp;|&nbsp; ✅ <b id="totalSolved">0</b> resolvidos</div>
+  </div>
+
+  <div class="tabs">
+    <button class="tab-btn active" data-tab="daily">Desafio do dia</button>
+    <button class="tab-btn" data-tab="practice">Modo prática</button>
+    <button class="tab-btn" data-tab="library">Biblioteca</button>
+    <button class="tab-btn" data-tab="settings">Config &amp; IA</button>
+  </div>
+
+  <!-- DAILY -->
+  <div class="panel active" id="panel-daily">
+    <div class="terminal">
+      <div class="line"><span class="prompt">$</span> desafio_do_dia --data="<span id="todayLabel"></span>"<span class="cursor"></span></div>
+    </div>
+    <div id="dailyCard"></div>
+  </div>
+
+  <!-- PRACTICE -->
+  <div class="panel" id="panel-practice">
+    <div class="practice-controls">
+      <select id="practiceTopic"></select>
+      <select id="practiceDiff">
+        <option value="">Todas as dificuldades</option>
+        <option value="Fácil">Fácil</option>
+        <option value="Média">Média</option>
+        <option value="Difícil">Difícil</option>
+      </select>
+      <button class="btn primary" id="newChallengeBtn">🎲 Novo desafio</button>
+      <button class="btn ghost" id="aiChallengeBtn" title="Configure sua chave de IA na aba Config">✨ Gerar com IA</button>
+    </div>
+    <div id="practiceCard"></div>
+  </div>
+
+  <!-- LIBRARY -->
+  <div class="panel" id="panel-library">
+    <div class="stat-grid" id="libStats"></div>
+    <div class="lib-filters">
+      <input type="text" id="libSearch" placeholder="buscar por título ou tópico..." style="max-width:260px;">
+      <select id="libTopicFilter"></select>
+      <button class="btn ghost" id="exportLibBtn">⬇ Exportar (.json)</button>
+    </div>
+    <div id="libraryList"></div>
+  </div>
+
+  <!-- SETTINGS -->
+  <div class="panel" id="panel-settings">
+    <div class="card">
+      <h2 style="font-family:var(--font-display);font-size:17px;margin-top:0;">Integração com ChatGPT (opcional)</h2>
+      <p class="desc" style="margin-top:4px;">
+        Se você tiver uma chave de API da OpenAI, o Luau Dojo pode gerar desafios inéditos e dar dicas personalizadas.
+        Isso é totalmente opcional — o site funciona 100% sem isso, usando o banco de desafios embutido.
+      </p>
+      <div class="field">
+        <label>Chave de API da OpenAI (armazenada apenas neste navegador, nunca enviada para outro lugar)</label>
+        <input type="password" id="openaiKey" placeholder="sk-...">
+      </div>
+      <div class="field">
+        <label>Modelo</label>
+        <select id="openaiModel">
+          <option value="gpt-4o-mini">gpt-4o-mini (recomendado, mais barato)</option>
+          <option value="gpt-4o">gpt-4o</option>
+          <option value="gpt-4.1-mini">gpt-4.1-mini</option>
+        </select>
+      </div>
+      <div class="btn-row">
+        <button class="btn primary" id="saveKeyBtn">Salvar</button>
+        <button class="btn ghost" id="testKeyBtn">Testar conexão</button>
+        <button class="btn danger" id="clearKeyBtn">Remover chave</button>
+        <span class="status-pill" id="keyStatus">sem chave configurada</span>
+      </div>
+      <p class="note">
+        Nota: a chamada é feita direto do seu navegador para a API da OpenAI. Alguns navegadores/redes podem bloquear
+        isso (CORS). Se der erro, sua chave pode não ter permissão para chamadas via browser — nesse caso o modo
+        prática continua funcionando normalmente com o banco de desafios embutido.
+      </p>
+    </div>
+    <div class="card">
+      <h2 style="font-family:var(--font-display);font-size:17px;margin-top:0;">Sobre a execução do código</h2>
+      <p class="desc" style="margin-top:4px;">
+        Seu código é executado de verdade no navegador usando o Fengari, uma máquina virtual de Lua 5.3 escrita em JS.
+        Luau (usado no Roblox Studio) é baseado em Lua 5.1 com várias extensões próprias, então esse ambiente cobre bem
+        a lógica pura dos desafios (variáveis, condicionais, laços, funções, tabelas, strings, recursão), mas não simula
+        APIs específicas do Roblox (Instance, game.Workspace, etc.) nem sintaxes exclusivas de Luau mais recentes.
+      </p>
+    </div>
+    <div class="card">
+      <h2 style="font-family:var(--font-display);font-size:17px;margin-top:0;">Dados salvos</h2>
+      <p class="desc" style="margin-top:4px;">Tudo (biblioteca de soluções, progresso diário, sequência) fica salvo no localStorage deste navegador — não há servidor nem conta.</p>
+      <button class="btn danger" id="resetAllBtn">Apagar todos os dados</button>
+    </div>
+  </div>
+
+  <footer>Luau Dojo — feito para treinar lógica de programação Luau/Lua a qualquer hora.</footer>
+</div>
+
+<script>
+/* ============================================================
+   BANCO DE DESAFIOS
+   ============================================================ */
+const CHALLENGES = [
+  {
+    id:'soma-tabela', title:'Soma dos números de uma tabela', topic:'Tabelas', difficulty:'Fácil',
+    description:'Escreva a função resolver(tabela) que recebe uma tabela de números e retorna a soma de todos os elementos.',
+    starter:'function resolver(tabela)\n\t-- seu código aqui\nend',
+    tests:[{input:[[1,2,3]], expected:6},{input:[[10,-2,5]], expected:13},{input:[[]], expected:0}],
+    hint:'Use um laço "for i, v in ipairs(tabela) do" e acumule em uma variável iniciada em 0.',
+    solution:'function resolver(tabela)\n\tlocal soma = 0\n\tfor _, v in ipairs(tabela) do\n\t\tsoma = soma + v\n\tend\n\treturn soma\nend'
+  },
+  {
+    id:'maior-valor', title:'Maior valor de uma tabela', topic:'Tabelas', difficulty:'Fácil',
+    description:'Escreva resolver(tabela) que retorna o maior número dentro da tabela recebida.',
+    starter:'function resolver(tabela)\n\t-- seu código aqui\nend',
+    tests:[{input:[[3,7,2]], expected:7},{input:[[-5,-1,-9]], expected:-1},{input:[[42]], expected:42}],
+    hint:'Comece com maior = tabela[1] e compare com cada valor seguinte.',
+    solution:'function resolver(tabela)\n\tlocal maior = tabela[1]\n\tfor _, v in ipairs(tabela) do\n\t\tif v > maior then maior = v end\n\tend\n\treturn maior\nend'
+  },
+  {
+    id:'fizzbuzz', title:'FizzBuzz', topic:'Condicionais', difficulty:'Fácil',
+    description:'Escreva resolver(n) que retorna "Fizz" se n é múltiplo de 3, "Buzz" se é múltiplo de 5, "FizzBuzz" se é múltiplo de ambos, ou tostring(n) caso contrário.',
+    starter:'function resolver(n)\n\t-- seu código aqui\nend',
+    tests:[{input:[15], expected:"FizzBuzz"},{input:[9], expected:"Fizz"},{input:[10], expected:"Buzz"},{input:[7], expected:"7"}],
+    hint:'Verifique primeiro o caso "n % 3 == 0 and n % 5 == 0" antes dos casos individuais.',
+    solution:'function resolver(n)\n\tif n % 15 == 0 then\n\t\treturn "FizzBuzz"\n\telseif n % 3 == 0 then\n\t\treturn "Fizz"\n\telseif n % 5 == 0 then\n\t\treturn "Buzz"\n\telse\n\t\treturn tostring(n)\n\tend\nend'
+  },
+  {
+    id:'is-par', title:'Número par ou ímpar', topic:'Condicionais', difficulty:'Fácil',
+    description:'Escreva resolver(n) que retorna true se n for par e false se for ímpar.',
+    starter:'function resolver(n)\n\t-- seu código aqui\nend',
+    tests:[{input:[4], expected:true},{input:[7], expected:false},{input:[0], expected:true}],
+    hint:'Um número é par quando "n % 2 == 0".',
+    solution:'function resolver(n)\n\treturn n % 2 == 0\nend'
+  },
+  {
+    id:'fatorial', title:'Fatorial (recursivo)', topic:'Recursão', difficulty:'Média',
+    description:'Escreva resolver(n) que calcula o fatorial de n usando recursão. resolver(0) deve retornar 1.',
+    starter:'function resolver(n)\n\t-- seu código aqui (use recursão)\nend',
+    tests:[{input:[5], expected:120},{input:[0], expected:1},{input:[3], expected:6}],
+    hint:'Caso base: se n <= 1, retorne 1. Caso recursivo: retorne n * resolver(n - 1).',
+    solution:'function resolver(n)\n\tif n <= 1 then\n\t\treturn 1\n\tend\n\treturn n * resolver(n - 1)\nend'
+  },
+  {
+    id:'fibonacci', title:'N-ésimo número de Fibonacci', topic:'Recursão', difficulty:'Média',
+    description:'Escreva resolver(n) que retorna o n-ésimo número da sequência de Fibonacci (resolver(1) = 1, resolver(2) = 1, resolver(3) = 2...).',
+    starter:'function resolver(n)\n\t-- seu código aqui\nend',
+    tests:[{input:[1], expected:1},{input:[6], expected:8},{input:[10], expected:55}],
+    hint:'Pode usar recursão (n <= 2 retorna 1) ou um laço iterativo com duas variáveis "a" e "b".',
+    solution:'function resolver(n)\n\tlocal a, b = 1, 1\n\tfor i = 3, n do\n\t\ta, b = b, a + b\n\tend\n\tif n <= 2 then return 1 end\n\treturn b\nend'
+  },
+  {
+    id:'inverter-string', title:'Inverter uma string', topic:'Strings', difficulty:'Fácil',
+    description:'Escreva resolver(texto) que retorna o texto invertido. Ex: "roblox" -> "xolbor".',
+    starter:'function resolver(texto)\n\t-- seu código aqui\nend',
+    tests:[{input:["roblox"], expected:"xolbor"},{input:["luau"], expected:"uaul"},{input:[""], expected:""}],
+    hint:'Percorra a string de trás para frente com string.sub e vá concatenando os caracteres.',
+    solution:'function resolver(texto)\n\tlocal invertido = ""\n\tfor i = #texto, 1, -1 do\n\t\tinvertido = invertido .. string.sub(texto, i, i)\n\tend\n\treturn invertido\nend'
+  },
+  {
+    id:'palindromo', title:'Verificar palíndromo', topic:'Strings', difficulty:'Média',
+    description:'Escreva resolver(texto) que retorna true se o texto é um palíndromo (lê-se igual de trás para frente), ignorando maiúsculas/minúsculas.',
+    starter:'function resolver(texto)\n\t-- seu código aqui\nend',
+    tests:[{input:["arara"], expected:true},{input:["Ovo"], expected:true},{input:["roblox"], expected:false}],
+    hint:'Converta tudo para minúsculo com string.lower, depois compare com a versão invertida.',
+    solution:'function resolver(texto)\n\tlocal t = string.lower(texto)\n\tlocal invertido = ""\n\tfor i = #t, 1, -1 do\n\t\tinvertido = invertido .. string.sub(t, i, i)\n\tend\n\treturn invertido == t\nend'
+  },
+  {
+    id:'contar-vogais', title:'Contar vogais', topic:'Strings', difficulty:'Fácil',
+    description:'Escreva resolver(texto) que retorna quantas vogais (a, e, i, o, u) existem no texto, ignorando maiúsculas/minúsculas.',
+    starter:'function resolver(texto)\n\t-- seu código aqui\nend',
+    tests:[{input:["Roblox Studio"], expected:5},{input:["xyz"], expected:0},{input:["aeiouAEIOU"], expected:10}],
+    hint:'Percorra caractere por caractere e use string.find ou uma tabela {a=true, e=true, ...} para checar.',
+    solution:'function resolver(texto)\n\tlocal t = string.lower(texto)\n\tlocal vogais = {a=true, e=true, i=true, o=true, u=true}\n\tlocal count = 0\n\tfor i = 1, #t do\n\t\tlocal c = string.sub(t, i, i)\n\t\tif vogais[c] then count = count + 1 end\n\tend\n\treturn count\nend'
+  },
+  {
+    id:'numero-primo', title:'Verificar se é primo', topic:'Matemática', difficulty:'Média',
+    description:'Escreva resolver(n) que retorna true se n é um número primo (maior que 1 e divisível apenas por 1 e por ele mesmo).',
+    starter:'function resolver(n)\n\t-- seu código aqui\nend',
+    tests:[{input:[7], expected:true},{input:[10], expected:false},{input:[1], expected:false},{input:[2], expected:true}],
+    hint:'Teste divisores de 2 até n-1 (ou até math.sqrt(n) para otimizar). Se algum dividir n exatamente, não é primo.',
+    solution:'function resolver(n)\n\tif n < 2 then return false end\n\tfor i = 2, n - 1 do\n\t\tif n % i == 0 then return false end\n\tend\n\treturn true\nend'
+  },
+  {
+    id:'mdc', title:'Máximo Divisor Comum (MDC)', topic:'Matemática', difficulty:'Média',
+    description:'Escreva resolver(a, b) que retorna o máximo divisor comum entre dois números inteiros positivos, usando o algoritmo de Euclides.',
+    starter:'function resolver(a, b)\n\t-- seu código aqui\nend',
+    tests:[{input:[12,18], expected:6},{input:[17,5], expected:1},{input:[100,25], expected:25}],
+    hint:'Algoritmo de Euclides: enquanto b ~= 0, faça a, b = b, a % b. Quando b for 0, a é o resultado.',
+    solution:'function resolver(a, b)\n\twhile b ~= 0 do\n\t\ta, b = b, a % b\n\tend\n\treturn a\nend'
+  },
+  {
+    id:'filtrar-pares', title:'Filtrar números pares', topic:'Tabelas', difficulty:'Média',
+    description:'Escreva resolver(tabela) que retorna uma nova tabela contendo apenas os números pares da tabela original, na mesma ordem.',
+    starter:'function resolver(tabela)\n\t-- seu código aqui\nend',
+    tests:[{input:[[1,2,3,4,5,6]], expected:[2,4,6]},{input:[[1,3,5]], expected:[]},{input:[[2,4]], expected:[2,4]}],
+    hint:'Crie uma tabela vazia, percorra a original com ipairs e use table.insert para os pares.',
+    solution:'function resolver(tabela)\n\tlocal pares = {}\n\tfor _, v in ipairs(tabela) do\n\t\tif v % 2 == 0 then\n\t\t\ttable.insert(pares, v)\n\t\tend\n\tend\n\treturn pares\nend'
+  },
+  {
+    id:'remover-duplicados', title:'Remover duplicados de uma tabela', topic:'Tabelas', difficulty:'Média',
+    description:'Escreva resolver(tabela) que retorna uma nova tabela sem valores repetidos, mantendo a primeira ocorrência de cada valor e a ordem original.',
+    starter:'function resolver(tabela)\n\t-- seu código aqui\nend',
+    tests:[{input:[[1,2,2,3,1,4]], expected:[1,2,3,4]},{input:[["a","b","a"]], expected:["a","b"]}],
+    hint:'Use uma tabela auxiliar "visto = {}" como um conjunto (set) para marcar valores já adicionados.',
+    solution:'function resolver(tabela)\n\tlocal visto = {}\n\tlocal resultado = {}\n\tfor _, v in ipairs(tabela) do\n\t\tif not visto[v] then\n\t\t\tvisto[v] = true\n\t\t\ttable.insert(resultado, v)\n\t\tend\n\tend\n\treturn resultado\nend'
+  },
+  {
+    id:'contar-ocorrencias', title:'Contar ocorrências de um valor', topic:'Tabelas', difficulty:'Fácil',
+    description:'Escreva resolver(tabela, valor) que retorna quantas vezes "valor" aparece dentro de "tabela".',
+    starter:'function resolver(tabela, valor)\n\t-- seu código aqui\nend',
+    tests:[{input:[[1,2,2,3,2],2], expected:3},{input:[["hit","miss","hit"],"hit"], expected:2},{input:[[1,2,3],9], expected:0}],
+    hint:'Percorra a tabela e incremente um contador toda vez que o elemento for igual a "valor".',
+    solution:'function resolver(tabela, valor)\n\tlocal count = 0\n\tfor _, v in ipairs(tabela) do\n\t\tif v == valor then count = count + 1 end\n\tend\n\treturn count\nend'
+  },
+  {
+    id:'media-tabela', title:'Média dos valores', topic:'Tabelas', difficulty:'Fácil',
+    description:'Escreva resolver(tabela) que retorna a média (soma dividida pela quantidade) dos números da tabela. Se a tabela estiver vazia, retorne 0.',
+    starter:'function resolver(tabela)\n\t-- seu código aqui\nend',
+    tests:[{input:[[2,4,6]], expected:4},{input:[[10,20]], expected:15},{input:[[]], expected:0}],
+    hint:'Some todos os valores e divida por #tabela — mas cuidado com divisão por zero.',
+    solution:'function resolver(tabela)\n\tif #tabela == 0 then return 0 end\n\tlocal soma = 0\n\tfor _, v in ipairs(tabela) do\n\t\tsoma = soma + v\n\tend\n\treturn soma / #tabela\nend'
+  },
+  {
+    id:'soma-digitos', title:'Soma dos dígitos de um número', topic:'Matemática', difficulty:'Fácil',
+    description:'Escreva resolver(n) que retorna a soma de todos os dígitos de um número inteiro positivo n. Ex: 1234 -> 10.',
+    starter:'function resolver(n)\n\t-- seu código aqui\nend',
+    tests:[{input:[1234], expected:10},{input:[7], expected:7},{input:[900], expected:9}],
+    hint:'Use um laço "while n > 0 do", pegue o último dígito com "n % 10" e remova com "n = math.floor(n / 10)".',
+    solution:'function resolver(n)\n\tlocal soma = 0\n\twhile n > 0 do\n\t\tsoma = soma + (n % 10)\n\t\tn = math.floor(n / 10)\n\tend\n\treturn soma\nend'
+  },
+  {
+    id:'anagrama', title:'Verificar se duas palavras são anagramas', topic:'Strings', difficulty:'Difícil',
+    description:'Escreva resolver(a, b) que retorna true se "a" e "b" são anagramas (contêm exatamente as mesmas letras, na mesma quantidade), ignorando maiúsculas/minúsculas.',
+    starter:'function resolver(a, b)\n\t-- seu código aqui\nend',
+    tests:[{input:["roma","amor"], expected:true},{input:["luau","robl"], expected:false},{input:["Ana","naa"], expected:true}],
+    hint:'Conte quantas vezes cada letra aparece em cada palavra usando uma tabela como contador, depois compare as duas tabelas.',
+    solution:'function resolver(a, b)\n\ta = string.lower(a)\n\tb = string.lower(b)\n\tif #a ~= #b then return false end\n\tlocal contagem = {}\n\tfor i = 1, #a do\n\t\tlocal c = string.sub(a, i, i)\n\t\tcontagem[c] = (contagem[c] or 0) + 1\n\tend\n\tfor i = 1, #b do\n\t\tlocal c = string.sub(b, i, i)\n\t\tcontagem[c] = (contagem[c] or 0) - 1\n\tend\n\tfor _, v in pairs(contagem) do\n\t\tif v ~= 0 then return false end\n\tend\n\treturn true\nend'
+  },
+  {
+    id:'busca-binaria', title:'Busca binária', topic:'Algoritmos', difficulty:'Difícil',
+    description:'Escreva resolver(tabela, alvo) que recebe uma tabela JÁ ORDENADA de números e retorna o índice (1-based) do "alvo", ou -1 se não existir, usando busca binária.',
+    starter:'function resolver(tabela, alvo)\n\t-- seu código aqui\nend',
+    tests:[{input:[[1,3,5,7,9,11],7], expected:4},{input:[[2,4,6,8],10], expected:-1},{input:[[5],5], expected:1}],
+    hint:'Mantenha "inicio" e "fim", calcule "meio", compare tabela[meio] com alvo e reduza o intervalo pela metade a cada passo.',
+    solution:'function resolver(tabela, alvo)\n\tlocal inicio, fim = 1, #tabela\n\twhile inicio <= fim do\n\t\tlocal meio = math.floor((inicio + fim) / 2)\n\t\tif tabela[meio] == alvo then\n\t\t\treturn meio\n\t\telseif tabela[meio] < alvo then\n\t\t\tinicio = meio + 1\n\t\telse\n\t\t\tfim = meio - 1\n\t\tend\n\tend\n\treturn -1\nend'
+  },
+  {
+    id:'bubble-sort', title:'Ordenar tabela (bubble sort)', topic:'Algoritmos', difficulty:'Difícil',
+    description:'Escreva resolver(tabela) que retorna uma nova tabela com os números ordenados de forma crescente, implementando o algoritmo bubble sort (não use table.sort).',
+    starter:'function resolver(tabela)\n\t-- seu código aqui (não use table.sort)\nend',
+    tests:[{input:[[5,2,8,1]], expected:[1,2,5,8]},{input:[[3,1,2]], expected:[1,2,3]},{input:[[1]], expected:[1]}],
+    hint:'Faça uma cópia da tabela, depois use dois laços aninhados trocando pares de vizinhos fora de ordem até não haver mais trocas.',
+    solution:'function resolver(tabela)\n\tlocal t = {}\n\tfor i, v in ipairs(tabela) do t[i] = v end\n\tfor i = 1, #t do\n\t\tfor j = 1, #t - i do\n\t\t\tif t[j] > t[j+1] then\n\t\t\t\tt[j], t[j+1] = t[j+1], t[j]\n\t\t\tend\n\t\tend\n\tend\n\treturn t\nend'
+  },
+  {
+    id:'contador-de-cliques', title:'Sistema de dano com cooldown (simulação)', topic:'Lógica de jogo', difficulty:'Média',
+    description:'Em jogos de combate (como no seu jogo de luta!), é comum limitar a frequência de ataques. Escreva resolver(tempoAtual, ultimoAtaque, cooldown) que retorna true se um novo ataque PODE ser feito (ou seja, se "tempoAtual - ultimoAtaque >= cooldown"), e false caso contrário.',
+    starter:'function resolver(tempoAtual, ultimoAtaque, cooldown)\n\t-- seu código aqui\nend',
+    tests:[{input:[10,5,3], expected:true},{input:[6,5,3], expected:false},{input:[8,5,3], expected:true}],
+    hint:'É uma comparação simples: tempoAtual - ultimoAtaque >= cooldown.',
+    solution:'function resolver(tempoAtual, ultimoAtaque, cooldown)\n\treturn (tempoAtual - ultimoAtaque) >= cooldown\nend'
+  },
+  {
+    id:'dano-critico', title:'Cálculo de dano com chance de crítico', topic:'Lógica de jogo', difficulty:'Média',
+    description:'Escreva resolver(danoBase, ehCritico) que retorna o dano final: se ehCritico for true, o dano deve ser danoBase * 2; caso contrário, retorna danoBase sem alteração.',
+    starter:'function resolver(danoBase, ehCritico)\n\t-- seu código aqui\nend',
+    tests:[{input:[20,true], expected:40},{input:[15,false], expected:15},{input:[0,true], expected:0}],
+    hint:'Um simples "if ehCritico then return danoBase * 2 end" resolve.',
+    solution:'function resolver(danoBase, ehCritico)\n\tif ehCritico then\n\t\treturn danoBase * 2\n\tend\n\treturn danoBase\nend'
+  }
+];
+
+/* ============================================================
+   ESTADO / LOCALSTORAGE
+   ============================================================ */
+const LS_LIB = 'luaudojo_library';
+const LS_DAILY = 'luaudojo_daily_progress';
+const LS_SETTINGS = 'luaudojo_settings';
+
+function loadLib(){ try{ return JSON.parse(localStorage.getItem(LS_LIB)) || []; }catch(e){ return []; } }
+function saveLib(lib){ localStorage.setItem(LS_LIB, JSON.stringify(lib)); }
+function loadDaily(){ try{ return JSON.parse(localStorage.getItem(LS_DAILY)) || {}; }catch(e){ return {}; } }
+function saveDaily(d){ localStorage.setItem(LS_DAILY, JSON.stringify(d)); }
+function loadSettings(){ try{ return JSON.parse(localStorage.getItem(LS_SETTINGS)) || {}; }catch(e){ return {}; } }
+function saveSettings(s){ localStorage.setItem(LS_SETTINGS, JSON.stringify(s)); }
+
+function todayStr(){
+  const d = new Date();
+  return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
+}
+
+function hashStr(str){
+  let h = 0;
+  for(let i=0;i<str.length;i++){ h = (h*31 + str.charCodeAt(i)) | 0; }
+  return Math.abs(h);
+}
+
+function pickDailyChallenge(){
+  const idx = hashStr(todayStr()) % CHALLENGES.length;
+  return CHALLENGES[idx];
+}
+
+function computeStreak(){
+  const daily = loadDaily();
+  let streak = 0;
+  let d = new Date();
+  while(true){
+    const key = d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
+    if(daily[key]){ streak++; d.setDate(d.getDate()-1); } else { break; }
+  }
+  return streak;
+}
+
+/* ============================================================
+   MOTOR DE EXECUÇÃO LUA (via Fengari)
+   ============================================================ */
+function toLuaLiteral(v){
+  if (Array.isArray(v)){
+    return '{' + v.map(toLuaLiteral).join(', ') + '}';
+  }
+  if (typeof v === 'string'){
+    return JSON.stringify(v).replace(/\\u([0-9a-fA-F]{4})/g,'\\u{$1}');
+  }
+  if (typeof v === 'boolean') return v ? 'true' : 'false';
+  if (v === null || v === undefined) return 'nil';
+  return String(v);
+}
+
+const LUA_HARNESS_HEADER = `
+local function __deepEqual(a, b)
+  if type(a) ~= type(b) then return false end
+  if type(a) ~= "table" then return a == b end
+  local ca, cb = 0, 0
+  for _ in pairs(a) do ca = ca + 1 end
+  for _ in pairs(b) do cb = cb + 1 end
+  if ca ~= cb then return false end
+  for k, v in pairs(a) do
+    if not __deepEqual(v, b[k]) then return false end
+  end
+  return true
+end
+
+local function __serialize(v)
+  if type(v) == "table" then
+    local parts = {}
+    for i = 1, #v do
+      table.insert(parts, __serialize(v[i]))
+    end
+    if #parts == 0 then
+      for k, val in pairs(v) do
+        table.insert(parts, tostring(k) .. "=" .. __serialize(val))
+      end
+    end
+    return "{" .. table.concat(parts, ", ") .. "}"
+  elseif type(v) == "string" then
+    return string.format("%q", v)
+  elseif v == nil then
+    return "nil"
+  else
+    return tostring(v)
+  end
+end
+`;
+
+function buildLuaSource(studentCode, tests){
+  const testsLua = tests.map(t => {
+    const argsLua = t.input.map(toLuaLiteral).join(', ');
+    return `{args = {${argsLua}}, expected = ${toLuaLiteral(t.expected)}}`;
+  }).join(',\n    ');
+
+  return `${LUA_HARNESS_HEADER}
+-- === CÓDIGO DO ALUNO ===
+${studentCode}
+-- === FIM DO CÓDIGO DO ALUNO ===
+
+local __tests = {
+    ${testsLua}
+}
+
+local __out = {}
+for i, t in ipairs(__tests) do
+  local ok, result = pcall(function() return resolver(table.unpack(t.args)) end)
+  if not ok then
+    table.insert(__out, "ERRO|" .. tostring(result))
+  elseif __deepEqual(result, t.expected) then
+    table.insert(__out, "OK")
+  else
+    table.insert(__out, "FAIL|" .. __serialize(result))
+  end
+end
+
+return table.concat(__out, "\\n@@@\\n")
+`;
+}
+
+function runStudentCode(studentCode, tests){
+  const { lua, lauxlib, lualib, to_luastring } = fengari;
+  const L = lauxlib.luaL_newstate();
+  lualib.luaL_openlibs(L);
+
+  let instrCount = 0;
+  const MAX_INSTR = 3000000;
+  lua.lua_sethook(L, function(L2){
+    instrCount += 2000;
+    if (instrCount > MAX_INSTR){
+      lauxlib.luaL_error(L2, to_luastring("Tempo de execução excedido — possível loop infinito."));
+    }
+  }, lua.LUA_MASKCOUNT, 2000);
+
+  const source = buildLuaSource(studentCode, tests);
+  const status = lauxlib.luaL_dostring(L, to_luastring(source));
+  if (status !== lua.LUA_OK){
+    const err = lua.lua_tojsstring(L, -1);
+    throw new Error(err);
+  }
+  const result = lua.lua_tojsstring(L, -1);
+  return result.split('\n@@@\n');
+}
+
+/* ============================================================
+   RENDERIZAÇÃO DE UM DESAFIO (usado no diário e na prática)
+   ============================================================ */
+function renderChallengeCard(container, challenge, opts){
+  opts = opts || {};
+  const mode = opts.mode || 'practice'; // 'daily' | 'practice'
+  const alreadySavedCode = opts.savedCode || challenge.starter;
+
+  container.innerHTML = `
+    <div class="card">
+      <div class="card-head">
+        <div>
+          <h2>${challenge.title}</h2>
+          <div class="tags">
+            <span class="tag diff-${challenge.difficulty}">${challenge.difficulty}</span>
+            <span class="tag">${challenge.topic}</span>
+          </div>
+        </div>
+      </div>
+      <div class="desc">${challenge.description}</div>
+      <div class="code-editor-wrap">
+        <pre class="code-highlight" aria-hidden="true"><code></code></pre>
+        <textarea class="code-editor" spellcheck="false" autocomplete="off" autocapitalize="off" autocorrect="off">${escapeHtml(alreadySavedCode)}</textarea>
+      </div>
+      <div class="btn-row">
+        <button class="btn primary" data-action="run">▶ Executar testes</button>
+        <button class="btn ghost" data-action="hint">💡 Dica</button>
+        <button class="btn ghost" data-action="ai-hint">✨ Dica com IA</button>
+        <button class="btn ghost" data-action="solution">👁 Ver solução</button>
+        <button class="btn ghost" data-action="reset">↺ Reiniciar código</button>
+      </div>
+      <div class="hint-box" style="display:none;" data-el="hint"></div>
+      <div class="solution-box" style="display:none;" data-el="solution"></div>
+      <div class="results" data-el="results"></div>
+    </div>
+  `;
+
+  const textarea = container.querySelector('textarea');
+  const highlightCode = container.querySelector('.code-highlight code');
+  const resultsEl = container.querySelector('[data-el="results"]');
+  const hintEl = container.querySelector('[data-el="hint"]');
+  const solutionEl = container.querySelector('[data-el="solution"]');
+
+  function syncHighlight(){
+    highlightCode.innerHTML = highlightLua(textarea.value) + '\n';
+  }
+  function syncScroll(){
+    const pre = textarea.previousElementSibling;
+    pre.scrollTop = textarea.scrollTop;
+    pre.scrollLeft = textarea.scrollLeft;
+  }
+  textarea.addEventListener('input', syncHighlight);
+  textarea.addEventListener('scroll', syncScroll);
+  syncHighlight();
+
+  container.querySelector('[data-action="hint"]').addEventListener('click', () => {
+    hintEl.style.display = hintEl.style.display === 'none' ? 'block' : 'none';
+    hintEl.textContent = '💡 ' + challenge.hint;
+  });
+
+  container.querySelector('[data-action="solution"]').addEventListener('click', () => {
+    solutionEl.style.display = solutionEl.style.display === 'none' ? 'block' : 'none';
+    solutionEl.innerHTML = highlightLua(challenge.solution);
+  });
+
+  container.querySelector('[data-action="reset"]').addEventListener('click', () => {
+    textarea.value = challenge.starter;
+    syncHighlight();
+    resultsEl.innerHTML = '';
+  });
+
+  container.querySelector('[data-action="ai-hint"]').addEventListener('click', async () => {
+    const settings = loadSettings();
+    if(!settings.openaiKey){
+      alert('Configure sua chave da OpenAI na aba "Config & IA" para usar dicas com IA.');
+      return;
+    }
+    hintEl.style.display = 'block';
+    hintEl.textContent = '✨ Pensando...';
+    try{
+      const dica = await askChatGPTForHint(challenge, textarea.value, settings);
+      hintEl.textContent = '✨ ' + dica;
+    }catch(e){
+      hintEl.textContent = '⚠ Não foi possível gerar a dica com IA (' + e.message + '). Tente a dica padrão.';
+    }
+  });
+
+  container.querySelector('[data-action="run"]').addEventListener('click', () => {
+    resultsEl.innerHTML = '<div class="summary">Executando...</div>';
+    setTimeout(() => {
+      let outputs;
+      try{
+        outputs = runStudentCode(textarea.value, challenge.tests);
+      }catch(e){
+        resultsEl.innerHTML = `<div class="result-row fail"><span class="dot"></span> Erro ao executar: ${escapeHtml(e.message)}</div>`;
+        return;
+      }
+      let passed = 0;
+      let html = '';
+      outputs.forEach((out, i) => {
+        if(out === 'OK'){
+          passed++;
+          html += `<div class="result-row ok"><span class="dot"></span> Teste ${i+1}: correto</div>`;
+        } else if(out.startsWith('FAIL|')){
+          html += `<div class="result-row fail"><span class="dot"></span> Teste ${i+1}: esperado diferente do obtido (${escapeHtml(out.slice(5))})</div>`;
+        } else if(out.startsWith('ERRO|')){
+          html += `<div class="result-row fail"><span class="dot"></span> Teste ${i+1}: erro — ${escapeHtml(out.slice(5))}</div>`;
+        }
+      });
+      const allPassed = passed === outputs.length;
+      html += `<div class="summary ${allPassed ? 'win' : ''}">${passed}/${outputs.length} testes passaram${allPassed ? ' 🎉 Desafio resolvido!' : ''}</div>`;
+      resultsEl.innerHTML = html;
+
+      if(allPassed){
+        saveToLibrary(challenge, textarea.value, mode);
+        if(mode === 'daily'){
+          const daily = loadDaily();
+          daily[todayStr()] = challenge.id;
+          saveDaily(daily);
+        }
+        updateHeaderStats();
+      }
+    }, 30);
+  });
+}
+
+function escapeHtml(str){
+  const div = document.createElement('div');
+  div.textContent = str;
+  return div.innerHTML;
+}
+
+/* ============================================================
+   REALCE DE SINTAXE (LUA / LUAU) — usado no editor, na solução
+   e nos códigos salvos na biblioteca.
+   ============================================================ */
+const LUA_KEYWORDS = new Set([
+  'and','break','do','else','elseif','end','for','function','if','in',
+  'local','not','or','repeat','return','then','until','while',
+  'self','continue','export','type'
+]);
+const LUA_LITERALS = new Set(['true','false','nil']);
+const LUA_BUILTINS = new Set([
+  'print','pairs','ipairs','next','type','tostring','tonumber','pcall','xpcall',
+  'error','assert','select','unpack','rawget','rawset','rawequal','rawlen',
+  'setmetatable','getmetatable','require','load','loadstring','dofile','collectgarbage',
+  'table','string','math','os','io','coroutine','utf8'
+]);
+
+const LUA_TOKEN_RE = /(--\[\[[\s\S]*?\]\])|(--[^\n]*)|(\[\[[\s\S]*?\]\])|("(?:\\.|[^"\\])*"|'(?:\\.|[^'\\])*')|(\d+\.?\d*(?:[eE][+-]?\d+)?|0x[0-9a-fA-F]+)|([A-Za-z_][A-Za-z0-9_]*)|([+\-*\/%^#<>=~,.:;(){}\[\]])/g;
+
+function highlightLua(code){
+  if(code == null) return '';
+  let out = '';
+  let lastIndex = 0;
+  let afterFunctionKw = false;
+  let match;
+  LUA_TOKEN_RE.lastIndex = 0;
+
+  while((match = LUA_TOKEN_RE.exec(code)) !== null){
+    if(match.index > lastIndex){
+      out += escapeHtml(code.slice(lastIndex, match.index));
+    }
+    const [full, longComment, lineComment, longString, quotedString, number, ident, op] = match;
+
+    if(longComment !== undefined || lineComment !== undefined){
+      out += `<span class="tok-com">${escapeHtml(longComment || lineComment)}</span>`;
+    } else if(longString !== undefined || quotedString !== undefined){
+      out += `<span class="tok-str">${escapeHtml(longString || quotedString)}</span>`;
+      afterFunctionKw = false;
+    } else if(number !== undefined){
+      out += `<span class="tok-num">${escapeHtml(number)}</span>`;
+      afterFunctionKw = false;
+    } else if(ident !== undefined){
+      if(afterFunctionKw){
+        out += `<span class="tok-func">${escapeHtml(ident)}</span>`;
+      } else if(ident === 'function'){
+        out += `<span class="tok-kw">${escapeHtml(ident)}</span>`;
+        afterFunctionKw = true;
+      } else if(LUA_LITERALS.has(ident)){
+        out += `<span class="tok-num">${escapeHtml(ident)}</span>`;
+        afterFunctionKw = false;
+      } else if(LUA_KEYWORDS.has(ident)){
+        out += `<span class="tok-kw">${escapeHtml(ident)}</span>`;
+        afterFunctionKw = false;
+      } else if(LUA_BUILTINS.has(ident)){
+        out += `<span class="tok-builtin">${escapeHtml(ident)}</span>`;
+        afterFunctionKw = false;
+      } else {
+        out += escapeHtml(ident);
+        afterFunctionKw = false;
+      }
+    } else if(op !== undefined){
+      if(afterFunctionKw && (op === '.' || op === ':')){
+        out += `<span class="tok-op">${escapeHtml(op)}</span>`;
+      } else {
+        out += `<span class="tok-op">${escapeHtml(op)}</span>`;
+        afterFunctionKw = false;
+      }
+    }
+    lastIndex = match.index + full.length;
+  }
+  if(lastIndex < code.length){
+    out += escapeHtml(code.slice(lastIndex));
+  }
+  return out;
+}
+
+function saveToLibrary(challenge, code, mode){
+  const lib = loadLib();
+  const existingIdx = lib.findIndex(item => item.challengeId === challenge.id);
+  const entry = {
+    challengeId: challenge.id,
+    title: challenge.title,
+    topic: challenge.topic,
+    difficulty: challenge.difficulty,
+    description: challenge.description,
+    code: code,
+    solvedAt: new Date().toISOString(),
+    source: mode
+  };
+  if(existingIdx >= 0){ lib[existingIdx] = entry; } else { lib.push(entry); }
+  saveLib(lib);
+  renderLibrary();
+}
+
+/* ============================================================
+   ABA: DESAFIO DO DIA
+   ============================================================ */
+function renderDaily(){
+  document.getElementById('todayLabel').textContent = todayStr();
+  const challenge = pickDailyChallenge();
+  const daily = loadDaily();
+  const lib = loadLib();
+  const solvedToday = !!daily[todayStr()];
+  const savedEntry = lib.find(item => item.challengeId === challenge.id);
+  const container = document.getElementById('dailyCard');
+  renderChallengeCard(container, challenge, {
+    mode:'daily',
+    savedCode: savedEntry ? savedEntry.code : challenge.starter
+  });
+  if(solvedToday){
+    const banner = document.createElement('div');
+    banner.className = 'summary win';
+    banner.style.marginBottom = '10px';
+    banner.textContent = '✅ Você já resolveu o desafio de hoje! Pode continuar ajustando o código se quiser.';
+    container.prepend(banner);
+  }
+}
+
+/* ============================================================
+   ABA: MODO PRÁTICA
+   ============================================================ */
+let practiceHistory = [];
+function populateTopicSelect(){
+  const topics = [...new Set(CHALLENGES.map(c => c.topic))].sort();
+  const sel = document.getElementById('practiceTopic');
+  sel.innerHTML = '<option value="">Todos os tópicos</option>' + topics.map(t => `<option value="${t}">${t}</option>`).join('');
+}
+
+function newPracticeChallenge(){
+  const topic = document.getElementById('practiceTopic').value;
+  const diff = document.getElementById('practiceDiff').value;
+  let pool = CHALLENGES.filter(c => (!topic || c.topic === topic) && (!diff || c.difficulty === diff));
+  if(pool.length === 0) pool = CHALLENGES;
+  let candidates = pool.filter(c => !practiceHistory.includes(c.id));
+  if(candidates.length === 0){ practiceHistory = []; candidates = pool; }
+  const choice = candidates[Math.floor(Math.random() * candidates.length)];
+  practiceHistory.push(choice.id);
+  if(practiceHistory.length > 5) practiceHistory.shift();
+  renderChallengeCard(document.getElementById('practiceCard'), choice, { mode:'practice' });
+}
+
+/* ============================================================
+   ABA: BIBLIOTECA
+   ============================================================ */
+function renderLibrary(){
+  const lib = loadLib().slice().sort((a,b) => new Date(b.solvedAt) - new Date(a.solvedAt));
+  const search = (document.getElementById('libSearch').value || '').toLowerCase();
+  const topicFilter = document.getElementById('libTopicFilter').value;
+
+  const topics = [...new Set(loadLib().map(i => i.topic))].sort();
+  const topicSel = document.getElementById('libTopicFilter');
+  const prevVal = topicSel.value;
+  topicSel.innerHTML = '<option value="">Todos os tópicos</option>' + topics.map(t => `<option value="${t}">${t}</option>`).join('');
+  topicSel.value = prevVal;
+
+  document.getElementById('libStats').innerHTML = `
+    <div class="stat"><div class="num">${lib.length}</div><div class="lbl">resolvidos</div></div>
+    <div class="stat"><div class="num">${topics.length}</div><div class="lbl">tópicos cobertos</div></div>
+    <div class="stat"><div class="num">${computeStreak()}</div><div class="lbl">dias seguidos</div></div>
+  `;
+
+  const filtered = lib.filter(item => {
+    const matchesSearch = !search || item.title.toLowerCase().includes(search) || item.topic.toLowerCase().includes(search);
+    const matchesTopic = !topicFilter || item.topic === topicFilter;
+    return matchesSearch && matchesTopic;
+  });
+
+  const listEl = document.getElementById('libraryList');
+  if(filtered.length === 0){
+    listEl.innerHTML = '<div class="empty-state">Nenhuma solução salva ainda. Resolva desafios no modo diário ou prática para preenchê-la.</div>';
+    return;
+  }
+
+  listEl.innerHTML = filtered.map((item, idx) => `
+    <div class="lib-item" data-idx="${idx}">
+      <div class="lib-item-head">
+        <div>
+          <h3>${escapeHtml(item.title)}</h3>
+          <div class="lib-item-meta">${item.topic} · ${item.difficulty} · resolvido em ${new Date(item.solvedAt).toLocaleDateString('pt-BR')}</div>
+        </div>
+        <button class="btn danger" data-del="${idx}" style="padding:6px 10px;">excluir</button>
+      </div>
+      <div class="lib-item-body">
+        <div class="desc" style="margin-top:0;">${escapeHtml(item.description)}</div>
+        <div class="lib-code"><code>${highlightLua(item.code)}</code></div>
+      </div>
+    </div>
+  `).join('');
+
+  listEl.querySelectorAll('.lib-item').forEach(el => {
+    el.addEventListener('click', (e) => {
+      if(e.target.closest('[data-del]')) return;
+      el.classList.toggle('open');
+    });
+  });
+  listEl.querySelectorAll('[data-del]').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const idx = Number(btn.dataset.del);
+      const item = filtered[idx];
+      let lib2 = loadLib();
+      lib2 = lib2.filter(x => x.challengeId !== item.challengeId || x.solvedAt !== item.solvedAt);
+      saveLib(lib2);
+      renderLibrary();
+      updateHeaderStats();
+    });
+  });
+}
+
+document.getElementById('exportLibBtn').addEventListener('click', () => {
+  const data = JSON.stringify(loadLib(), null, 2);
+  const blob = new Blob([data], {type:'application/json'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'luau-dojo-biblioteca.json';
+  a.click();
+  URL.revokeObjectURL(url);
+});
+
+document.getElementById('libSearch').addEventListener('input', renderLibrary);
+document.getElementById('libTopicFilter').addEventListener('change', renderLibrary);
+
+/* ============================================================
+   ABA: CONFIG / IA (ChatGPT)
+   ============================================================ */
+function refreshKeyStatus(){
+  const settings = loadSettings();
+  const pill = document.getElementById('keyStatus');
+  const aiBtn = document.getElementById('aiChallengeBtn');
+  if(settings.openaiKey){
+    pill.textContent = 'chave configurada';
+    pill.classList.add('on');
+    aiBtn.disabled = false;
+  } else {
+    pill.textContent = 'sem chave configurada';
+    pill.classList.remove('on');
+    aiBtn.disabled = true;
+  }
+  document.getElementById('openaiModel').value = settings.openaiModel || 'gpt-4o-mini';
+}
+
+document.getElementById('saveKeyBtn').addEventListener('click', () => {
+  const key = document.getElementById('openaiKey').value.trim();
+  const model = document.getElementById('openaiModel').value;
+  if(!key){ alert('Cole sua chave de API antes de salvar.'); return; }
+  saveSettings({ openaiKey:key, openaiModel:model });
+  document.getElementById('openaiKey').value = '';
+  refreshKeyStatus();
+  alert('Chave salva neste navegador.');
+});
+
+document.getElementById('clearKeyBtn').addEventListener('click', () => {
+  saveSettings({});
+  refreshKeyStatus();
+});
+
+document.getElementById('testKeyBtn').addEventListener('click', async () => {
+  const settings = loadSettings();
+  if(!settings.openaiKey){ alert('Salve uma chave primeiro.'); return; }
+  const btn = document.getElementById('testKeyBtn');
+  btn.textContent = 'Testando...';
+  try{
+    await callOpenAI(settings, [{role:'user', content:'Responda apenas com a palavra: ok'}], 10);
+    alert('Conexão funcionando! ✅');
+  }catch(e){
+    alert('Falha na conexão: ' + e.message);
+  }finally{
+    btn.textContent = 'Testar conexão';
+  }
+});
+
+document.getElementById('resetAllBtn').addEventListener('click', () => {
+  if(confirm('Isso vai apagar sua biblioteca de soluções, progresso diário e configurações neste navegador. Continuar?')){
+    localStorage.removeItem(LS_LIB);
+    localStorage.removeItem(LS_DAILY);
+    localStorage.removeItem(LS_SETTINGS);
+    location.reload();
+  }
+});
+
+async function callOpenAI(settings, messages, maxTokens){
+  const res = await fetch('https://api.openai.com/v1/chat/completions', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': 'Bearer ' + settings.openaiKey
+    },
+    body: JSON.stringify({
+      model: settings.openaiModel || 'gpt-4o-mini',
+      messages: messages,
+      max_tokens: maxTokens || 500,
+      temperature: 0.8
+    })
+  });
+  if(!res.ok){
+    const errBody = await res.text();
+    throw new Error('HTTP ' + res.status + ' — ' + errBody.slice(0,200));
+  }
+  const data = await res.json();
+  return data.choices[0].message.content;
+}
+
+async function askChatGPTForHint(challenge, currentCode, settings){
+  const prompt = `Você é um professor de programação Luau (Roblox Studio). O aluno está tentando resolver este desafio:
+Título: ${challenge.title}
+Descrição: ${challenge.description}
+
+Código atual do aluno:
+${currentCode}
+
+Dê UMA dica curta (2-3 frases, em português) que ajude o aluno a avançar, SEM entregar a solução completa nem escrever o código pronto.`;
+  return await callOpenAI(settings, [{role:'user', content:prompt}], 200);
+}
+
+async function generateAIChallenge(settings){
+  const prompt = `Gere um desafio de lógica de programação em Lua 5.3 (compatível com Luau do Roblox Studio, mas usando apenas sintaxe padrão de Lua: sem APIs do Roblox, sem "continue", sem tipos). Responda APENAS com um JSON válido, sem markdown, no formato exato:
+{
+  "title": "string curto",
+  "topic": "string (ex: Tabelas, Strings, Matemática, Condicionais, Recursão)",
+  "difficulty": "Fácil" | "Média" | "Difícil",
+  "description": "explicação clara do que a função resolver deve fazer",
+  "starter": "function resolver(...)\\n\\t-- seu código aqui\\nend",
+  "solution": "código Lua completo e correto da função resolver",
+  "hint": "uma dica curta",
+  "tests": [ {"input": [valor1, valor2], "expected": valorEsperado}, ... pelo menos 3 casos de teste ]
+}
+Os valores de "input" e "expected" devem ser apenas números, strings, booleanos ou arrays simples (sem tabelas aninhadas complexas), pois serão convertidos para tabelas Lua automaticamente.`;
+  const content = await callOpenAI(settings, [{role:'user', content: prompt}], 900);
+  const cleaned = content.replace(/```json|```/g,'').trim();
+  const parsed = JSON.parse(cleaned);
+  parsed.id = 'ia-' + Date.now();
+  return parsed;
+}
+
+document.getElementById('aiChallengeBtn').addEventListener('click', async () => {
+  const settings = loadSettings();
+  if(!settings.openaiKey){
+    alert('Configure sua chave da OpenAI na aba "Config & IA" primeiro.');
+    return;
+  }
+  const btn = document.getElementById('aiChallengeBtn');
+  btn.textContent = '✨ Gerando...';
+  btn.disabled = true;
+  try{
+    const challenge = await generateAIChallenge(settings);
+    renderChallengeCard(document.getElementById('practiceCard'), challenge, { mode:'practice-ia' });
+  }catch(e){
+    alert('Não foi possível gerar um desafio com IA agora (' + e.message + '). Use o botão "Novo desafio" para o banco padrão.');
+  }finally{
+    btn.textContent = '✨ Gerar com IA';
+    btn.disabled = false;
+  }
+});
+
+/* ============================================================
+   NAVEGAÇÃO / INICIALIZAÇÃO
+   ============================================================ */
+document.querySelectorAll('.tab-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+    btn.classList.add('active');
+    document.getElementById('panel-' + btn.dataset.tab).classList.add('active');
+    if(btn.dataset.tab === 'library') renderLibrary();
+  });
+});
+
+document.getElementById('newChallengeBtn').addEventListener('click', newPracticeChallenge);
+document.getElementById('practiceTopic').addEventListener('change', newPracticeChallenge);
+document.getElementById('practiceDiff').addEventListener('change', newPracticeChallenge);
+
+function updateHeaderStats(){
+  document.getElementById('streakCount').textContent = computeStreak();
+  document.getElementById('totalSolved').textContent = loadLib().length;
+}
+
+function init(){
+  populateTopicSelect();
+  renderDaily();
+  newPracticeChallenge();
+  renderLibrary();
+  refreshKeyStatus();
+  updateHeaderStats();
+}
+
+if (typeof fengari === 'undefined'){
+  document.body.innerHTML = '<div style="padding:40px;font-family:monospace;color:#fff;background:#0b0d13;">Não foi possível carregar o motor de execução Lua (fengari). Verifique sua conexão com a internet e recarregue a página.</div>';
+} else {
+  init();
+}
+</script>
+</body>
+</html>
