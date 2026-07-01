@@ -32,6 +32,17 @@
   --font-display:'Space Grotesk', sans-serif;
   --font-mono:'JetBrains Mono', monospace;
   --font-body:'Inter', sans-serif;
+
+  /* ---- syntax highlight (baseado no tema Roblox Studio) ---- */
+  --syn-text:#bcbec8;
+  --syn-operator:#bcbec8;
+  --syn-number:#f2ba2a;
+  --syn-string:#8ee9b6;
+  --syn-comment:#6a6f81;
+  --syn-keyword:#eb7973;
+  --syn-builtin:#8fb4ff;
+  --syn-function-name:#fae4aa;
+  --syn-local-property:#70a0ff;
 }
 *{box-sizing:border-box;}
 html,body{margin:0;padding:0;}
@@ -112,13 +123,36 @@ a{color:var(--text); text-decoration-color:var(--text-faint);}
 .tag.diff-Difícil{ color:#111113; border-color:var(--white); background:var(--white); font-weight:600; }
 .desc{ color:var(--text-dim); font-size:14.5px; white-space:pre-line; margin:12px 0 16px; }
 
-textarea.code-editor{
-  width:100%; min-height:220px; background:#0c0c0e; color:var(--text);
-  font-family:var(--font-mono); font-size:13.5px; border:1px solid var(--border);
-  border-radius:10px; padding:14px; resize:vertical; tab-size:2;
-  outline:none;
+.code-editor-wrap{
+  position:relative; width:100%; min-height:220px; border:1px solid var(--border);
+  border-radius:10px; background:#0c0c0e; overflow:hidden;
 }
-textarea.code-editor:focus{ border-color:var(--border-strong); box-shadow:0 0 0 3px var(--white-soft); }
+.code-editor-wrap:focus-within{ border-color:var(--border-strong); box-shadow:0 0 0 3px var(--white-soft); }
+
+pre.code-highlight{
+  margin:0; position:absolute; inset:0; pointer-events:none; overflow:auto;
+  font-family:var(--font-mono); font-size:13.5px; line-height:1.55; tab-size:2;
+  padding:14px; white-space:pre-wrap; word-wrap:break-word; color:var(--syn-text);
+}
+pre.code-highlight code{ font-family:inherit; }
+
+textarea.code-editor{
+  position:relative; z-index:1; display:block; width:100%; height:100%; min-height:220px;
+  background:transparent; color:transparent; caret-color:var(--syn-text);
+  font-family:var(--font-mono); font-size:13.5px; line-height:1.55; border:0;
+  border-radius:10px; padding:14px; resize:vertical; tab-size:2;
+  outline:none; white-space:pre-wrap; word-wrap:break-word;
+}
+
+/* classes de token do realce de sintaxe (código no editor / soluções / biblioteca) */
+.tok-kw{ color:var(--syn-keyword); }
+.tok-num{ color:var(--syn-number); }
+.tok-str{ color:var(--syn-string); }
+.tok-com{ color:var(--syn-comment); font-style:italic; }
+.tok-builtin{ color:var(--syn-builtin); }
+.tok-func{ color:var(--syn-function-name); }
+.tok-op{ color:var(--syn-operator); }
+.tok-prop{ color:var(--syn-local-property); }
 
 .btn-row{ display:flex; gap:10px; margin-top:12px; flex-wrap:wrap; }
 .btn{
@@ -645,7 +679,10 @@ function renderChallengeCard(container, challenge, opts){
         </div>
       </div>
       <div class="desc">${challenge.description}</div>
-      <textarea class="code-editor" spellcheck="false">${alreadySavedCode}</textarea>
+      <div class="code-editor-wrap">
+        <pre class="code-highlight" aria-hidden="true"><code></code></pre>
+        <textarea class="code-editor" spellcheck="false" autocomplete="off" autocapitalize="off" autocorrect="off">${escapeHtml(alreadySavedCode)}</textarea>
+      </div>
       <div class="btn-row">
         <button class="btn primary" data-action="run">▶ Executar testes</button>
         <button class="btn ghost" data-action="hint">💡 Dica</button>
@@ -660,9 +697,22 @@ function renderChallengeCard(container, challenge, opts){
   `;
 
   const textarea = container.querySelector('textarea');
+  const highlightCode = container.querySelector('.code-highlight code');
   const resultsEl = container.querySelector('[data-el="results"]');
   const hintEl = container.querySelector('[data-el="hint"]');
   const solutionEl = container.querySelector('[data-el="solution"]');
+
+  function syncHighlight(){
+    highlightCode.innerHTML = highlightLua(textarea.value) + '\n';
+  }
+  function syncScroll(){
+    const pre = textarea.previousElementSibling;
+    pre.scrollTop = textarea.scrollTop;
+    pre.scrollLeft = textarea.scrollLeft;
+  }
+  textarea.addEventListener('input', syncHighlight);
+  textarea.addEventListener('scroll', syncScroll);
+  syncHighlight();
 
   container.querySelector('[data-action="hint"]').addEventListener('click', () => {
     hintEl.style.display = hintEl.style.display === 'none' ? 'block' : 'none';
@@ -671,11 +721,12 @@ function renderChallengeCard(container, challenge, opts){
 
   container.querySelector('[data-action="solution"]').addEventListener('click', () => {
     solutionEl.style.display = solutionEl.style.display === 'none' ? 'block' : 'none';
-    solutionEl.textContent = challenge.solution;
+    solutionEl.innerHTML = highlightLua(challenge.solution);
   });
 
   container.querySelector('[data-action="reset"]').addEventListener('click', () => {
     textarea.value = challenge.starter;
+    syncHighlight();
     resultsEl.innerHTML = '';
   });
 
@@ -738,6 +789,82 @@ function escapeHtml(str){
   const div = document.createElement('div');
   div.textContent = str;
   return div.innerHTML;
+}
+
+/* ============================================================
+   REALCE DE SINTAXE (LUA / LUAU) — usado no editor, na solução
+   e nos códigos salvos na biblioteca.
+   ============================================================ */
+const LUA_KEYWORDS = new Set([
+  'and','break','do','else','elseif','end','for','function','if','in',
+  'local','not','or','repeat','return','then','until','while',
+  'self','continue','export','type'
+]);
+const LUA_LITERALS = new Set(['true','false','nil']);
+const LUA_BUILTINS = new Set([
+  'print','pairs','ipairs','next','type','tostring','tonumber','pcall','xpcall',
+  'error','assert','select','unpack','rawget','rawset','rawequal','rawlen',
+  'setmetatable','getmetatable','require','load','loadstring','dofile','collectgarbage',
+  'table','string','math','os','io','coroutine','utf8'
+]);
+
+const LUA_TOKEN_RE = /(--\[\[[\s\S]*?\]\])|(--[^\n]*)|(\[\[[\s\S]*?\]\])|("(?:\\.|[^"\\])*"|'(?:\\.|[^'\\])*')|(\d+\.?\d*(?:[eE][+-]?\d+)?|0x[0-9a-fA-F]+)|([A-Za-z_][A-Za-z0-9_]*)|([+\-*\/%^#<>=~,.:;(){}\[\]])/g;
+
+function highlightLua(code){
+  if(code == null) return '';
+  let out = '';
+  let lastIndex = 0;
+  let afterFunctionKw = false;
+  let match;
+  LUA_TOKEN_RE.lastIndex = 0;
+
+  while((match = LUA_TOKEN_RE.exec(code)) !== null){
+    if(match.index > lastIndex){
+      out += escapeHtml(code.slice(lastIndex, match.index));
+    }
+    const [full, longComment, lineComment, longString, quotedString, number, ident, op] = match;
+
+    if(longComment !== undefined || lineComment !== undefined){
+      out += `<span class="tok-com">${escapeHtml(longComment || lineComment)}</span>`;
+    } else if(longString !== undefined || quotedString !== undefined){
+      out += `<span class="tok-str">${escapeHtml(longString || quotedString)}</span>`;
+      afterFunctionKw = false;
+    } else if(number !== undefined){
+      out += `<span class="tok-num">${escapeHtml(number)}</span>`;
+      afterFunctionKw = false;
+    } else if(ident !== undefined){
+      if(afterFunctionKw){
+        out += `<span class="tok-func">${escapeHtml(ident)}</span>`;
+      } else if(ident === 'function'){
+        out += `<span class="tok-kw">${escapeHtml(ident)}</span>`;
+        afterFunctionKw = true;
+      } else if(LUA_LITERALS.has(ident)){
+        out += `<span class="tok-num">${escapeHtml(ident)}</span>`;
+        afterFunctionKw = false;
+      } else if(LUA_KEYWORDS.has(ident)){
+        out += `<span class="tok-kw">${escapeHtml(ident)}</span>`;
+        afterFunctionKw = false;
+      } else if(LUA_BUILTINS.has(ident)){
+        out += `<span class="tok-builtin">${escapeHtml(ident)}</span>`;
+        afterFunctionKw = false;
+      } else {
+        out += escapeHtml(ident);
+        afterFunctionKw = false;
+      }
+    } else if(op !== undefined){
+      if(afterFunctionKw && (op === '.' || op === ':')){
+        out += `<span class="tok-op">${escapeHtml(op)}</span>`;
+      } else {
+        out += `<span class="tok-op">${escapeHtml(op)}</span>`;
+        afterFunctionKw = false;
+      }
+    }
+    lastIndex = match.index + full.length;
+  }
+  if(lastIndex < code.length){
+    out += escapeHtml(code.slice(lastIndex));
+  }
+  return out;
 }
 
 function saveToLibrary(challenge, code, mode){
@@ -848,7 +975,7 @@ function renderLibrary(){
       </div>
       <div class="lib-item-body">
         <div class="desc" style="margin-top:0;">${escapeHtml(item.description)}</div>
-        <div class="lib-code">${escapeHtml(item.code)}</div>
+        <div class="lib-code"><code>${highlightLua(item.code)}</code></div>
       </div>
     </div>
   `).join('');
